@@ -55,7 +55,7 @@ export const useRegularExpressionHook = (): IRegularExpressionHook => {
     const entries = data.entry.split(',').map((entry) => entry.trim());
 
     try {
-      const regex = new RegExp(data.regex);
+      const regex = new RegExp(`^${data.regex}$`);
 
       const checkResults = entries.map((entry) => ({
         entry,
