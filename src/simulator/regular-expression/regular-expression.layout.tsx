@@ -57,11 +57,16 @@ export const RegularExpressionLayout = ({
       <ResultContainer>
         <ResultTitle>Resultados:</ResultTitle>
         <ResultList>
-          {results.map((result, index) => (
-            <ResultItem key={index} valid={result.valid}>
-              {result.entry}: {result.valid ? 'Válida' : 'Inválida'}
-            </ResultItem>
-          ))}
+          {results.map((result, index) => {
+            if (result.entry === '') {
+              result.entry = 'ε';
+            }
+            return result.entry.trim() !== '' ? (
+              <ResultItem key={index} valid={result.valid}>
+                {result.entry}: {result.valid ? 'Válida' : 'Inválida'}
+              </ResultItem>
+            ) : null;
+          })}
         </ResultList>
       </ResultContainer>
     </Container>
