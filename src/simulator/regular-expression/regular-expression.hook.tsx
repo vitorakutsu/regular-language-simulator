@@ -23,7 +23,7 @@ export const useRegularExpressionHook = (): IRegularExpressionHook => {
   const [results, setResults] = useState<{ entry: string; valid: boolean }[]>(
     []
   );
-  const toast = useToast(); // Hook do Chakra para exibir toasts
+  const toast = useToast();
 
   const handleData = (key: string, value: string) => {
     setData({ ...data, [key]: value });
@@ -34,17 +34,6 @@ export const useRegularExpressionHook = (): IRegularExpressionHook => {
       toast({
         title: 'Erro',
         description: 'A expressão regular não pode estar vazia.',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-      return;
-    }
-
-    if (!data.entry) {
-      toast({
-        title: 'Erro',
-        description: 'As entradas não podem estar vazias.',
         status: 'error',
         duration: 5000,
         isClosable: true,
