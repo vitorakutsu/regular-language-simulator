@@ -5,7 +5,7 @@ export const GridContainer = styled.div`
   width: 100%;
   position: relative;
   overflow: hidden;
-  background-color: #f0f0f0;
+  background-color: transparent;
 `;
 
 export const StateButtonContainer = styled.div`
@@ -15,6 +15,7 @@ export const StateButtonContainer = styled.div`
   align-items: center;
   gap: 10px;
   cursor: move;
+  z-index: 5;
 `;
 
 export const StateNodeStyled = styled.div`

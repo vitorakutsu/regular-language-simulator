@@ -65,7 +65,7 @@ export const RegularAutomaton = () => {
     const newState = {
       id: `state-${nextStateId}`,
       label: `Estado ${nextStateId}`,
-      position: { x: 100 + (nextStateId - 1) * 100, y: 100 + (nextStateId - 1) * 100 },
+      position: { x: nextStateId * 100, y: nextStateId * 100 },
       isInitial: nextStateId === 1,
     };
     setStates((prev) => [...prev, newState]);
@@ -79,9 +79,9 @@ export const RegularAutomaton = () => {
           alert("Símbolo da transição não pode ser vazio.");
           return;
         }
-  
+
         const symbols = symbol.split(",").map((s) => s.trim());
-  
+
         setTransitions((prev) => [
           ...prev,
           ...symbols.map((symbol) => ({
@@ -92,6 +92,7 @@ export const RegularAutomaton = () => {
           })),
         ]);
       } else {
+        // Transição para ele mesmo
         if (!symbol.trim()) {
           alert("Símbolo da transição não pode ser vazio.");
           return;
@@ -112,7 +113,7 @@ export const RegularAutomaton = () => {
     } else {
       setFromState(stateId);
     }
-  };  
+  };
 
   const removeTransition = (transitionId: string) => {
     setTransitions((prev) =>
@@ -245,7 +246,6 @@ export const RegularAutomaton = () => {
     <GridContainer
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      style={{ backgroundColor: "transparent", position: "relative" }}
     >
       <Box mb="20px" zIndex={10} position="relative">
         <Stack direction="row" spacing={4}>
@@ -279,7 +279,11 @@ export const RegularAutomaton = () => {
         </Stack>
       </Box>
       
-      <TransitionLine states={states} transitions={transitions} removeTransition={removeTransition}/>
+      <TransitionLine 
+        states={states}
+        transitions={transitions}
+        removeTransition={removeTransition}
+      />
 
       {states.map((state) => (
         <StateButtonContainer
