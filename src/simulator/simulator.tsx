@@ -1,6 +1,7 @@
 import { Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
 import { Screen } from '../components/screen/screen';
 import { RegularExpression } from './regular-expression/regular-expression';
+import { RegularAutomaton } from './regular-automaton/regular-automaton';
 
 export const Simulator = () => {
   return (
@@ -13,8 +14,8 @@ export const Simulator = () => {
       >
         <TabList>
           <Tab>Simulador de Expressões</Tab>
-          <Tab>Two</Tab>
-          <Tab>Three</Tab>
+          <Tab>Simulador de Automatos</Tab>
+          <Tab>Simulador de Gramaticas</Tab>
         </TabList>
 
         <TabPanels>
@@ -22,7 +23,7 @@ export const Simulator = () => {
             <RegularExpression />
           </TabPanel>
           <TabPanel>
-            <p>two!</p>
+            <RegularAutomaton />
           </TabPanel>
           <TabPanel>
             <p>three!</p>
