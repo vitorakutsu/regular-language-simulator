@@ -13,6 +13,7 @@ export const StateButtonContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 10px;
   cursor: move;
 `;
 
@@ -32,4 +33,10 @@ export const TransitionLabel = styled.text`
   text-anchor: middle;
   stroke: black;
   stroke-width: 1px;
+`;
+
+export const Row = styled.div`
+  display: flex;
+  gap: 10px;
+  align-items: center;
 `;

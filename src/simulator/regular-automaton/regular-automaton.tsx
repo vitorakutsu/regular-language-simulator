@@ -1,13 +1,16 @@
 import React, { useState } from "react";
 import {
   GridContainer,
+  Row,
   StateButtonContainer,
   StateNodeStyled,
-  TransitionLabel,
 } from "./regular-automaton.styles";
+import { TransitionLine } from "../../components/automaton/transition-line";
 import { Box, Button, Input, Stack, Toast } from "@chakra-ui/react";
+import { AddIcon, StarIcon, CheckIcon, CloseIcon } from "@chakra-ui/icons";
+import { DeleteIcon } from "@chakra-ui/icons";
+import { StateInterface } from "../../interface/state-interface";
 
-// Definir o tipo Transition corretamente
 interface AutomatonTransition {
   id: string;
   source: string;
@@ -15,16 +18,20 @@ interface AutomatonTransition {
   label: string;
 }
 
+interface State {
+  id: string;
+  isInitial?: boolean;
+  isFinal?: boolean;
+}
+
+interface Transition {
+  source: string;
+  target: string;
+  label: string;
+}
+
 export const RegularAutomaton = () => {
-  const [states, setStates] = useState<
-    {
-      id: string;
-      label: string;
-      position: { x: number; y: number };
-      isInitial?: boolean;
-      isFinal?: boolean;
-    }[]
-  >([]);
+  const [states, setStates] = useState<StateInterface[]>([]);
   const [transitions, setTransitions] = useState<AutomatonTransition[]>([]);
   const [nextStateId, setNextStateId] = useState<number>(1);
   const [fromState, setFromState] = useState<string | null>(null);
@@ -58,7 +65,7 @@ export const RegularAutomaton = () => {
     const newState = {
       id: `state-${nextStateId}`,
       label: `Estado ${nextStateId}`,
-      position: { x: nextStateId * 100, y: nextStateId * 100 },
+      position: { x: 100 + (nextStateId - 1) * 100, y: 100 + (nextStateId - 1) * 100 },
       isInitial: nextStateId === 1,
     };
     setStates((prev) => [...prev, newState]);
@@ -68,14 +75,36 @@ export const RegularAutomaton = () => {
   const startTransition = (stateId: string) => {
     if (fromState) {
       if (fromState !== stateId) {
+        if (!symbol.trim()) {
+          alert("Símbolo da transição não pode ser vazio.");
+          return;
+        }
+  
+        const symbols = symbol.split(",").map((s) => s.trim());
+  
         setTransitions((prev) => [
           ...prev,
-          {
-            id: `transition-${fromState}-${stateId}`,
+          ...symbols.map((symbol) => ({
+            id: `transition-${fromState}-${stateId}-${symbol}`,
             source: fromState,
             target: stateId,
             label: symbol,
-          },
+          })),
+        ]);
+      } else {
+        if (!symbol.trim()) {
+          alert("Símbolo da transição não pode ser vazio.");
+          return;
+        }
+        const symbols = symbol.split(",").map((s) => s.trim());
+        setTransitions((prev) => [
+          ...prev,
+          ...symbols.map((symbol) => ({
+            id: `transition-${fromState}-${stateId}-${symbol}`,
+            source: fromState,
+            target: stateId,
+            label: symbol,
+          })),
         ]);
       }
       setFromState(null);
@@ -83,9 +112,8 @@ export const RegularAutomaton = () => {
     } else {
       setFromState(stateId);
     }
-  };
+  };  
 
-  // Função para remover uma transição
   const removeTransition = (transitionId: string) => {
     setTransitions((prev) =>
       prev.filter((transition) => transition.id !== transitionId)
@@ -93,8 +121,10 @@ export const RegularAutomaton = () => {
   };
 
   const simulateInput = () => {
-    let currentState = states.find((state) => state.isInitial);
-    if (!currentState) {
+    let currentStates: State[] = states.filter(
+      (state: State) => state.isInitial
+    );
+    if (currentStates.length === 0) {
       Toast({
         title: "Erro",
         description: "Nenhum estado inicial definido",
@@ -105,32 +135,64 @@ export const RegularAutomaton = () => {
       return;
     }
 
+    let isValid = false;
     let currentWordIndex = 0;
-    let isValid = true;
 
-    // Processar cada símbolo da palavra
-    while (currentWordIndex < word.length && isValid) {
-      const currentSymbol = word[currentWordIndex];
-      const transition = transitions.find(
-        (t) =>
-          t.source === currentState?.id &&
-          t.label.split(",").includes(currentSymbol)
-      );
+    const processEpsilonTransitions = (activeStates: State[]): State[] => {
+      let epsilonStates: State[] = [...activeStates];
+      let queue: State[] = [...activeStates];
 
-      if (transition) {
-        currentState = states.find((state) => state.id === transition.target);
-        currentWordIndex++;
-      } else {
-        isValid = false; // Não há transição para o símbolo atual
+      while (queue.length > 0) {
+        const currentState = queue.shift();
+        const epsilonTransitions = transitions.filter(
+          (t: Transition) => t.source === currentState?.id && t.label === "ε"
+        );
+
+        epsilonTransitions.forEach((transition) => {
+          const nextState = states.find(
+            (state: State) => state.id === transition.target
+          );
+          if (nextState && !epsilonStates.includes(nextState)) {
+            epsilonStates.push(nextState);
+            queue.push(nextState);
+          }
+        });
       }
+
+      return epsilonStates;
+    };
+
+    while (currentWordIndex < word.length && currentStates.length > 0) {
+      const currentSymbol = word[currentWordIndex];
+      let nextStates: State[] = [];
+
+      currentStates.forEach((state: State) => {
+        const possibleTransitions = transitions.filter(
+          (t: Transition) =>
+            t.source === state.id && t.label.split(",").includes(currentSymbol)
+        );
+
+        possibleTransitions.forEach((transition) => {
+          const nextState = states.find(
+            (s: State) => s.id === transition.target
+          );
+          if (nextState) {
+            nextStates.push(nextState);
+          }
+        });
+      });
+
+      nextStates = processEpsilonTransitions(nextStates);
+
+      currentStates = nextStates;
+      currentWordIndex++;
     }
 
-    // Verifica se o estado final é um estado de aceitação
-    if (currentState && currentState.isFinal && isValid) {
-      setValid(true);
-    } else {
-      setValid(false);
-    }
+    currentStates = processEpsilonTransitions(currentStates);
+
+    isValid = currentStates.some((state: State) => state.isFinal);
+
+    setValid(isValid);
   };
 
   const handleMouseDown = (id: string, e: React.MouseEvent) => {
@@ -145,6 +207,17 @@ export const RegularAutomaton = () => {
         },
       });
     }
+  };
+
+  const removeState = (stateId: string) => {
+    setStates((prev) => prev.filter((state) => state.id !== stateId));
+
+    setTransitions((prev) =>
+      prev.filter(
+        (transition) =>
+          transition.source !== stateId && transition.target !== stateId
+      )
+    );
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -174,7 +247,6 @@ export const RegularAutomaton = () => {
       onMouseUp={handleMouseUp}
       style={{ backgroundColor: "transparent", position: "relative" }}
     >
-      {/* Controles */}
       <Box mb="20px" zIndex={10} position="relative">
         <Stack direction="row" spacing={4}>
           <Button colorScheme="teal" onClick={addState}>
@@ -187,7 +259,7 @@ export const RegularAutomaton = () => {
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
                 placeholder="Símbolo da transição"
-                width="150px" // Ajuste a largura para um tamanho fixo
+                width="150px"
               />
               <Button colorScheme="red" onClick={() => setFromState(null)}>
                 Cancelar
@@ -199,85 +271,16 @@ export const RegularAutomaton = () => {
             value={word}
             onChange={(e) => setWord(e.target.value)}
             placeholder="Digite a palavra"
-            width="150px" // Ajuste a largura para um tamanho fixo
+            width="150px"
           />
           <Button colorScheme="blue" onClick={simulateInput}>
             Simular Palavra
           </Button>
         </Stack>
       </Box>
+      
+      <TransitionLine states={states} transitions={transitions} removeTransition={removeTransition}/>
 
-      {/* Camada de transições */}
-      <svg
-        style={{
-          position: "absolute",
-          left: 0,
-          top: 0,
-          width: "100%",
-          height: "100%",
-          zIndex: 1,
-        }}
-      >
-        {transitions.map((transition, index) => {
-          const sourceState = states.find((s) => s.id === transition.source);
-          const targetState = states.find((s) => s.id === transition.target);
-
-          const transitionsBetweenStates = transitions.filter(
-            (t) =>
-              (t.source === transition.source &&
-                t.target === transition.target) ||
-              (t.source === transition.target && t.target === transition.source)
-          );
-
-          const numTransitions = transitionsBetweenStates.length;
-          const transitionIndex = transitionsBetweenStates.indexOf(transition);
-
-          const curvature = 60 * (transitionIndex - (numTransitions - 1) / 2);
-
-          if (sourceState && targetState) {
-            const sourceX = sourceState.position.x + 50;
-            const sourceY = sourceState.position.y + 50;
-            const targetX = targetState.position.x + 50;
-            const targetY = targetState.position.y + 50;
-
-            const d =
-              numTransitions === 1
-                ? `M${sourceX},${sourceY} L${targetX},${targetY}`
-                : `M${sourceX},${sourceY} C${sourceX},${
-                    sourceY + curvature
-                  } ${targetX},${targetY + curvature} ${targetX},${targetY}`;
-
-            return (
-              <g key={transition.id}>
-                <path d={d} stroke="black" fill="transparent" />
-                <TransitionLabel
-                  x={(sourceX + targetX) / 2}
-                  y={(sourceY + targetY) / 2 + curvature / 2}
-                >
-                  {transition.label}
-                </TransitionLabel>
-
-                {/* Gerenciamento de botões "Remover" */}
-                <text
-                  x={(sourceX + targetX) / 2}
-                  y={
-                    numTransitions > 1 && transitionIndex % 2 === 0
-                      ? (sourceY + targetY) / 2 - 20 + curvature / 2
-                      : (sourceY + targetY) / 2 + 20 + curvature / 2
-                  }
-                  style={{ cursor: "pointer", fill: "red" }}
-                  onClick={() => removeTransition(transition.id)}
-                >
-                  Remover
-                </text>
-              </g>
-            );
-          }
-          return null;
-        })}
-      </svg>
-
-      {/* Renderizar os estados */}
       {states.map((state) => (
         <StateButtonContainer
           key={state.id}
@@ -290,15 +293,21 @@ export const RegularAutomaton = () => {
           }}
         >
           <StateNodeStyled>{state.label}</StateNodeStyled>
-          <button onClick={() => startTransition(state.id)}>
-            Adicionar Transição
-          </button>
-          <button onClick={() => toggleInitialState(state.id)}>
-            {state.isInitial ? "Remover Inicial" : "Definir Inicial"}
-          </button>
-          <button onClick={() => toggleFinalState(state.id)}>
-            {state.isFinal ? "Remover Final" : "Definir Final"}
-          </button>
+          <Row>
+            <button onClick={() => startTransition(state.id)}>
+              <AddIcon />
+            </button>
+            <button onClick={() => toggleInitialState(state.id)}>
+              {state.isInitial ? <CloseIcon /> : <StarIcon />}
+            </button>
+            <button onClick={() => toggleFinalState(state.id)}>
+              {state.isFinal ? <CloseIcon /> : <CheckIcon />}
+            </button>
+            <button onClick={() => removeState(state.id)}>
+              {" "}
+              <DeleteIcon />
+            </button>
+          </Row>
         </StateButtonContainer>
       ))}
 
