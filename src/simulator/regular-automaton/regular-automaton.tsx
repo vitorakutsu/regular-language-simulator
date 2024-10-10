@@ -289,7 +289,7 @@ export const RegularAutomaton = () => {
           <Input
             value={word}
             onChange={(e) => setWord(e.target.value)}
-            placeholder="Digite a palavra"
+            placeholder="Ex: a, ab, abc"
             width="150px"
           />
           <Button colorScheme="blue" onClick={simulateInput}>
