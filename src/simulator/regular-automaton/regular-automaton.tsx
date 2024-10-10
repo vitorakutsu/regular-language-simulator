@@ -10,6 +10,7 @@ import { Box, Button, Input, Stack, Toast } from "@chakra-ui/react";
 import { AddIcon, StarIcon, CheckIcon, CloseIcon } from "@chakra-ui/icons";
 import { DeleteIcon } from "@chakra-ui/icons";
 import { StateInterface } from "../../interface/state-interface";
+import { ResultItem } from "../regular-expression/regular-expression.styles";
 
 interface AutomatonTransition {
   id: string;
@@ -37,7 +38,9 @@ export const RegularAutomaton = () => {
   const [fromState, setFromState] = useState<string | null>(null);
   const [symbol, setSymbol] = useState<string>("");
   const [word, setWord] = useState<string>("");
-  const [valid, setValid] = useState<boolean | null>(null);
+  const [validResults, setValidResults] = useState<
+    { word: string; isValid: boolean }[]
+  >([]);
   const [draggingState, setDraggingState] = useState<{
     id: string;
     offset: { x: number; y: number };
@@ -80,32 +83,29 @@ export const RegularAutomaton = () => {
           return;
         }
 
-        const symbols = symbol.split(",").map((s) => s.trim());
-
         setTransitions((prev) => [
           ...prev,
-          ...symbols.map((symbol) => ({
+          {
             id: `transition-${fromState}-${stateId}-${symbol}`,
             source: fromState,
             target: stateId,
             label: symbol,
-          })),
+          },
         ]);
       } else {
-        // Transição para ele mesmo
         if (!symbol.trim()) {
           alert("Símbolo da transição não pode ser vazio.");
           return;
         }
-        const symbols = symbol.split(",").map((s) => s.trim());
+
         setTransitions((prev) => [
           ...prev,
-          ...symbols.map((symbol) => ({
+          {
             id: `transition-${fromState}-${stateId}-${symbol}`,
             source: fromState,
             target: stateId,
             label: symbol,
-          })),
+          },
         ]);
       }
       setFromState(null);
@@ -135,20 +135,17 @@ export const RegularAutomaton = () => {
       });
       return;
     }
-
-    let isValid = false;
-    let currentWordIndex = 0;
-
+  
     const processEpsilonTransitions = (activeStates: State[]): State[] => {
       let epsilonStates: State[] = [...activeStates];
       let queue: State[] = [...activeStates];
-
+  
       while (queue.length > 0) {
         const currentState = queue.shift();
         const epsilonTransitions = transitions.filter(
           (t: Transition) => t.source === currentState?.id && t.label === "ε"
         );
-
+  
         epsilonTransitions.forEach((transition) => {
           const nextState = states.find(
             (state: State) => state.id === transition.target
@@ -159,42 +156,67 @@ export const RegularAutomaton = () => {
           }
         });
       }
-
+  
       return epsilonStates;
     };
-
-    while (currentWordIndex < word.length && currentStates.length > 0) {
-      const currentSymbol = word[currentWordIndex];
-      let nextStates: State[] = [];
-
-      currentStates.forEach((state: State) => {
-        const possibleTransitions = transitions.filter(
-          (t: Transition) =>
-            t.source === state.id && t.label.split(",").includes(currentSymbol)
+  
+    const wordsArray = word
+      .split(",")
+      .map((w) => w.trim());
+  
+    const results = wordsArray.map((currentWord) => {
+      if (currentWord === "") {
+        // Tratativa para a palavra vazia
+        const initialFinalState = states.find(
+          (state) => state.isInitial && state.isFinal
         );
-
-        possibleTransitions.forEach((transition) => {
-          const nextState = states.find(
-            (s: State) => s.id === transition.target
+        return {
+          word: "ε",
+          isValid: Boolean(initialFinalState),
+        };
+      }
+  
+      let currentWordIndex = 0;
+      currentStates = states.filter((state: State) => state.isInitial);
+  
+      while (
+        currentWordIndex < currentWord.length &&
+        currentStates.length > 0
+      ) {
+        const currentSymbol = currentWord[currentWordIndex];
+        let nextStates: State[] = [];
+  
+        currentStates.forEach((state: State) => {
+          const possibleTransitions = transitions.filter(
+            (t: Transition) =>
+              t.source === state.id &&
+              t.label.split(",").includes(currentSymbol)
           );
-          if (nextState) {
-            nextStates.push(nextState);
-          }
+  
+          possibleTransitions.forEach((transition) => {
+            const nextState = states.find(
+              (s: State) => s.id === transition.target
+            );
+            if (nextState) {
+              nextStates.push(nextState);
+            }
+          });
         });
-      });
-
-      nextStates = processEpsilonTransitions(nextStates);
-
-      currentStates = nextStates;
-      currentWordIndex++;
-    }
-
-    currentStates = processEpsilonTransitions(currentStates);
-
-    isValid = currentStates.some((state: State) => state.isFinal);
-
-    setValid(isValid);
+  
+        nextStates = processEpsilonTransitions(nextStates);
+        currentStates = nextStates;
+        currentWordIndex++;
+      }
+  
+      currentStates = processEpsilonTransitions(currentStates);
+  
+      const isValid = currentStates.some((state: State) => state.isFinal);
+      return { word: currentWord, isValid };
+    });
+  
+    setValidResults(results);
   };
+  
 
   const handleMouseDown = (id: string, e: React.MouseEvent) => {
     const { clientX, clientY } = e;
@@ -243,10 +265,7 @@ export const RegularAutomaton = () => {
   };
 
   return (
-    <GridContainer
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-    >
+    <GridContainer onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
       <Box mb="20px" zIndex={10} position="relative">
         <Stack direction="row" spacing={4}>
           <Button colorScheme="teal" onClick={addState}>
@@ -278,8 +297,8 @@ export const RegularAutomaton = () => {
           </Button>
         </Stack>
       </Box>
-      
-      <TransitionLine 
+
+      <TransitionLine
         states={states}
         transitions={transitions}
         removeTransition={removeTransition}
@@ -315,11 +334,19 @@ export const RegularAutomaton = () => {
         </StateButtonContainer>
       ))}
 
-      {valid !== null && (
-        <div style={{ marginTop: "20px", zIndex: 10 }}>
-          {valid ? <p>A palavra é aceita.</p> : <p>A palavra não é aceita.</p>}
-        </div>
-      )}
+      <Box mt={4}>
+        {validResults.map((result, index) => {
+          if(result.word === '') {
+            result.word = "ε";
+          }
+
+          return (
+            <ResultItem key={index} valid={result.isValid}>
+              {result.word} - {result.isValid ? "Válido" : "Inválido"}
+            </ResultItem>
+          );
+        })}
+      </Box>
     </GridContainer>
   );
 };
