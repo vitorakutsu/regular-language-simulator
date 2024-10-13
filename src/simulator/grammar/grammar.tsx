@@ -1,8 +1,8 @@
-import { useGrammar } from './grammar.hook';
+import { useGrammarHook } from './grammar.hook';
 import { GrammarLayout } from './grammar.layout';
 
 export const Grammar = () => {
-  const properties = useGrammar();
+  const properties = useGrammarHook();
 
   return <GrammarLayout {...properties} />;
 };
