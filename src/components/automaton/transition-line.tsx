@@ -12,7 +12,11 @@ interface ITransitionLine {
   removeTransition: (id: string) => void;
 }
 
-export const TransitionLine = ({ states, transitions, removeTransition }: ITransitionLine) => {
+export const TransitionLine = ({
+  states,
+  transitions,
+  removeTransition,
+}: ITransitionLine) => {
   return (
     <svg
       style={{
@@ -30,7 +34,8 @@ export const TransitionLine = ({ states, transitions, removeTransition }: ITrans
 
         const transitionsBetweenStates = transitions.filter(
           (t) =>
-            (t.source === transition.source && t.target === transition.target) ||
+            (t.source === transition.source &&
+              t.target === transition.target) ||
             (t.source === transition.target && t.target === transition.source)
         );
 
@@ -59,11 +64,24 @@ export const TransitionLine = ({ states, transitions, removeTransition }: ITrans
 
             return (
               <g key={transition.id}>
-                <path d={d} stroke="black" fill="transparent" />
                 <path
-                  d={`M${loopX - 10},${loopY + 10} L${loopX},${loopY} L${loopX + 10},${loopY + 10}`}
+                  d={`M${loopX},${loopY} 
+        C ${loopX + 60}, ${loopY - 80}, 
+          ${loopX + 80}, ${loopY + 80}, 
+          ${loopX},${loopY}`}
                   stroke="black"
                   fill="transparent"
+                  strokeWidth="2"
+                />
+
+                {/* Ponta da seta */}
+                <path
+                  d={`M${loopX - 8},${loopY + 8} 
+        L${loopX},${loopY} 
+        L${loopX + 8},${loopY + 8}`}
+                  stroke="black"
+                  fill="transparent"
+                  strokeWidth="2"
                 />
                 <TransitionLabel x={loopX - 20} y={loopY - 10}>
                   {transition.label}
@@ -117,4 +135,3 @@ export const TransitionLine = ({ states, transitions, removeTransition }: ITrans
     </svg>
   );
 };
-
