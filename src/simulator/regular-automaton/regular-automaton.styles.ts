@@ -18,11 +18,12 @@ export const StateButtonContainer = styled.div`
   z-index: 5;
 `;
 
-export const StateNodeStyled = styled.div`
+export const StateNodeStyled = styled.div<{highlighted: boolean}>`
   border-radius: 50%;
   background-color: #e0e0e0;
   padding: 20px;
   text-align: center;
+  background-color: ${props => props.highlighted ? 'green' : ''};
 `;
 
 export const TransitionLine = styled.line`

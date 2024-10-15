@@ -45,6 +45,7 @@ export const RegularAutomaton = () => {
     id: string;
     offset: { x: number; y: number };
   } | null>(null);
+  const [highlightedStates, setHighlightedStates] = useState<string[]>([]);
 
   const toggleInitialState = (stateId: string) => {
     setStates((prev) =>
@@ -86,7 +87,7 @@ export const RegularAutomaton = () => {
         setTransitions((prev) => [
           ...prev,
           {
-            id: `transition-${fromState}-${stateId}-${symbol}`,
+            id: `transition-${fromState}-${stateId}-  ${symbol}`,
             source: fromState,
             target: stateId,
             label: symbol,
@@ -121,7 +122,7 @@ export const RegularAutomaton = () => {
     );
   };
 
-  const simulateInput = () => {
+  const simulateInput = async () => {
     let currentStates: State[] = states.filter(
       (state: State) => state.isInitial
     );
@@ -135,17 +136,17 @@ export const RegularAutomaton = () => {
       });
       return;
     }
-  
+
     const processEpsilonTransitions = (activeStates: State[]): State[] => {
       let epsilonStates: State[] = [...activeStates];
       let queue: State[] = [...activeStates];
-  
+
       while (queue.length > 0) {
         const currentState = queue.shift();
         const epsilonTransitions = transitions.filter(
           (t: Transition) => t.source === currentState?.id && t.label === "ε"
         );
-  
+
         epsilonTransitions.forEach((transition) => {
           const nextState = states.find(
             (state: State) => state.id === transition.target
@@ -156,43 +157,47 @@ export const RegularAutomaton = () => {
           }
         });
       }
-  
+
       return epsilonStates;
     };
-  
+
     const wordsArray = word
       .split(",")
       .map((w) => w.trim());
-  
-    const results = wordsArray.map((currentWord) => {
+
+    const results = [];
+    for (const currentWord of wordsArray) {
       if (currentWord === "") {
-        // Tratativa para a palavra vazia
         const initialFinalState = states.find(
           (state) => state.isInitial && state.isFinal
         );
-        return {
+        results.push({
           word: "ε",
           isValid: Boolean(initialFinalState),
-        };
+        });
+        continue;
       }
-  
+
       let currentWordIndex = 0;
       currentStates = states.filter((state: State) => state.isInitial);
-  
+
       while (
         currentWordIndex < currentWord.length &&
         currentStates.length > 0
       ) {
         const currentSymbol = currentWord[currentWordIndex];
         let nextStates: State[] = [];
-  
+
+        setHighlightedStates(currentStates.map((s) => s.id));
+        await new Promise((r) => setTimeout(r, 1000));
+
         currentStates.forEach((state: State) => {
           const possibleTransitions = transitions.filter(
             (t: Transition) =>
               t.source === state.id &&
               t.label.split(",").includes(currentSymbol)
           );
-  
+
           possibleTransitions.forEach((transition) => {
             const nextState = states.find(
               (s: State) => s.id === transition.target
@@ -202,19 +207,21 @@ export const RegularAutomaton = () => {
             }
           });
         });
-  
+
         nextStates = processEpsilonTransitions(nextStates);
         currentStates = nextStates;
         currentWordIndex++;
       }
-  
+
       currentStates = processEpsilonTransitions(currentStates);
-  
+      setHighlightedStates(currentStates.map((s) => s.id));
+
       const isValid = currentStates.some((state: State) => state.isFinal);
-      return { word: currentWord, isValid };
-    });
-  
+      results.push({ word: currentWord, isValid });
+    }
+
     setValidResults(results);
+    setHighlightedStates([]); // Limpar os estados destacados ao final da simulação
   };
   
 
@@ -315,7 +322,7 @@ export const RegularAutomaton = () => {
             zIndex: 5,
           }}
         >
-          <StateNodeStyled>{state.label}</StateNodeStyled>
+          <StateNodeStyled highlighted={highlightedStates.includes(state.id)}>{state.label}</StateNodeStyled>
           <Row>
             <button onClick={() => startTransition(state.id)}>
               <AddIcon />
