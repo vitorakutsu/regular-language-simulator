@@ -62,6 +62,10 @@ export const RegularAutomaton = () => {
     );
   };
 
+  const hasFinalState = () => {
+    return states.some((state) => state.isFinal);
+  };
+
   const toggleFinalState = (stateId: string) => {
     setStates((prev) =>
       prev.map((state) =>
@@ -128,9 +132,21 @@ export const RegularAutomaton = () => {
   };
 
   const simulateInput = async () => {
+    if(!hasFinalState()){
+      toast({
+        title: 'Erro',
+        description: 'Nenhum estado final definido',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      return;
+    }
+
     let currentStates: State[] = states.filter(
       (state: State) => state.isInitial
     );
+
     if (currentStates.length === 0) {
       Toast({
         title: "Erro",
