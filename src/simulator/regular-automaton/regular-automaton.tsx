@@ -11,6 +11,7 @@ import { AddIcon, StarIcon, CheckIcon, CloseIcon } from "@chakra-ui/icons";
 import { DeleteIcon } from "@chakra-ui/icons";
 import { StateInterface } from "../../interface/state-interface";
 import { ResultItem } from "../regular-expression/regular-expression.styles";
+import { Title } from "../grammar/grammar.styles";
 
 interface AutomatonTransition {
   id: string;
@@ -238,9 +239,9 @@ export const RegularAutomaton = () => {
     setHighlightedStates([]);
 
     toast({
-      title: 'Verificação concluída',
-      description: 'As entradas foram verificadas com sucesso.',
-      status: 'success',
+      title: "Verificação concluída",
+      description: "As entradas foram verificadas com sucesso.",
+      status: "success",
       duration: 5000,
       isClosable: true,
     });
@@ -293,97 +294,100 @@ export const RegularAutomaton = () => {
   };
 
   return (
-    <GridContainer onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
-      <Box mb="20px" zIndex={10} position="relative">
-        <Stack direction="row" spacing={4}>
-          <Button colorScheme="teal" onClick={addState}>
-            Adicionar Estado
-          </Button>
+    <>
+      <Title>Simulador de Automatos Regulares</Title>
+      <GridContainer onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
+        <Box mb="20px" zIndex={10} position="relative">
+          <Stack direction="row" spacing={4}>
+            <Button colorScheme="teal" onClick={addState}>
+              Adicionar Estado
+            </Button>
 
-          {fromState && (
-            <>
-              <Input
-                value={symbol}
-                onChange={(e) => setSymbol(e.target.value)}
-                placeholder="Símbolo da transição"
-                width="150px"
-              />
-              <Button colorScheme="red" onClick={() => setFromState(null)}>
-                Cancelar
-              </Button>
-            </>
-          )}
+            {fromState && (
+              <>
+                <Input
+                  value={symbol}
+                  onChange={(e) => setSymbol(e.target.value)}
+                  placeholder="Símbolo da transição"
+                  width="150px"
+                />
+                <Button colorScheme="red" onClick={() => setFromState(null)}>
+                  Cancelar
+                </Button>
+              </>
+            )}
 
-          <Input
-            value={word}
-            onChange={(e) => setWord(e.target.value)}
-            placeholder="Ex: a, ab, abc"
-            width="150px"
-          />
-          <Button colorScheme="blue" onClick={simulateInput}>
-            Simular Palavra
-          </Button>
-          <div>Analisando palavra: {atualWord}</div>
-        </Stack>
-      </Box>
+            <Input
+              value={word}
+              onChange={(e) => setWord(e.target.value)}
+              placeholder="Ex: a, ab, abc"
+              width="150px"
+            />
+            <Button colorScheme="blue" onClick={simulateInput}>
+              Simular Palavra
+            </Button>
+            <div>Analisando palavra: {atualWord}</div>
+          </Stack>
+        </Box>
 
-      <TransitionLine
-        states={states}
-        transitions={transitions}
-        removeTransition={removeTransition}
-      />
+        <TransitionLine
+          states={states}
+          transitions={transitions}
+          removeTransition={removeTransition}
+        />
 
-      {states.map((state) => (
-        <StateButtonContainer
-          key={state.id}
-          onMouseDown={(e) => handleMouseDown(state.id, e)}
-          style={{
-            top: state.position.y,
-            left: state.position.x,
-            position: "absolute",
-            zIndex: 5,
-          }}
-        >
-          <StateNodeStyled
+        {states.map((state) => (
+          <StateButtonContainer
             key={state.id}
-            highlighted={
-              highlightedStates.find((highlight) => highlight.id === state.id)
-                ?.color || ""
-            }
+            onMouseDown={(e) => handleMouseDown(state.id, e)}
+            style={{
+              top: state.position.y,
+              left: state.position.x,
+              position: "absolute",
+              zIndex: 5,
+            }}
           >
-            {state.label}
-          </StateNodeStyled>
-          <Row>
-            <button onClick={() => startTransition(state.id)}>
-              <AddIcon />
-            </button>
-            <button onClick={() => toggleInitialState(state.id)}>
-              {state.isInitial ? <CloseIcon /> : <StarIcon />}
-            </button>
-            <button onClick={() => toggleFinalState(state.id)}>
-              {state.isFinal ? <CloseIcon /> : <CheckIcon />}
-            </button>
-            <button onClick={() => removeState(state.id)}>
-              {" "}
-              <DeleteIcon />
-            </button>
-          </Row>
-        </StateButtonContainer>
-      ))}
+            <StateNodeStyled
+              key={state.id}
+              highlighted={
+                highlightedStates.find((highlight) => highlight.id === state.id)
+                  ?.color || ""
+              }
+            >
+              {state.label}
+            </StateNodeStyled>
+            <Row>
+              <button onClick={() => startTransition(state.id)}>
+                <AddIcon />
+              </button>
+              <button onClick={() => toggleInitialState(state.id)}>
+                {state.isInitial ? <CloseIcon /> : <StarIcon />}
+              </button>
+              <button onClick={() => toggleFinalState(state.id)}>
+                {state.isFinal ? <CloseIcon /> : <CheckIcon />}
+              </button>
+              <button onClick={() => removeState(state.id)}>
+                {" "}
+                <DeleteIcon />
+              </button>
+            </Row>
+          </StateButtonContainer>
+        ))}
 
-      <Box mt={4}>
-        {validResults.map((result, index) => {
-          if (result.word === "") {
-            result.word = "ε";
-          }
+        <Box mt={4}>
+          {validResults.map((result, index) => {
+            if (result.word === "") {
+              result.word = "ε";
+            }
 
-          return (
-            <ResultItem key={index} valid={result.isValid}>
-              {result.word} - {result.isValid ? "Válido" : "Inválido"}
-            </ResultItem>
-          );
-        })}
-      </Box>
-    </GridContainer>
+            return (
+              <ResultItem key={index} valid={result.isValid}>
+                {result.word} - {result.isValid ? "Válido" : "Inválido"}
+              </ResultItem>
+            );
+          })}
+        </Box>
+      </GridContainer>
+    </>
   );
 };
