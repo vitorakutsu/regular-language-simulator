@@ -45,7 +45,10 @@ export const RegularAutomaton = () => {
     id: string;
     offset: { x: number; y: number };
   } | null>(null);
-  const [highlightedStates, setHighlightedStates] = useState<string[]>([]);
+  const [highlightedStates, setHighlightedStates] = useState<
+    { id: string; color: string }[]
+  >([]);
+  const [atualWord, setAtualWord] = useState<string>("");
 
   const toggleInitialState = (stateId: string) => {
     setStates((prev) =>
@@ -161,12 +164,12 @@ export const RegularAutomaton = () => {
       return epsilonStates;
     };
 
-    const wordsArray = word
-      .split(",")
-      .map((w) => w.trim());
+    const wordsArray = word.split(",").map((w) => w.trim());
 
     const results = [];
     for (const currentWord of wordsArray) {
+      setAtualWord(currentWord);
+
       if (currentWord === "") {
         const initialFinalState = states.find(
           (state) => state.isInitial && state.isFinal
@@ -188,7 +191,9 @@ export const RegularAutomaton = () => {
         const currentSymbol = currentWord[currentWordIndex];
         let nextStates: State[] = [];
 
-        setHighlightedStates(currentStates.map((s) => s.id));
+        setHighlightedStates(
+          currentStates.map((s) => ({ id: s.id, color: "yellow" }))
+        );
         await new Promise((r) => setTimeout(r, 1000));
 
         currentStates.forEach((state: State) => {
@@ -214,16 +219,23 @@ export const RegularAutomaton = () => {
       }
 
       currentStates = processEpsilonTransitions(currentStates);
-      setHighlightedStates(currentStates.map((s) => s.id));
 
       const isValid = currentStates.some((state: State) => state.isFinal);
+
+      setHighlightedStates(
+        currentStates.map((s) => ({
+          id: s.id,
+          color: isValid ? "green" : "red",
+        }))
+      );
+      await new Promise((r) => setTimeout(r, 1500));
+
       results.push({ word: currentWord, isValid });
     }
 
     setValidResults(results);
-    setHighlightedStates([]); // Limpar os estados destacados ao final da simulação
+    setHighlightedStates([]); // Limpa os destaques após o término da simulação
   };
-  
 
   const handleMouseDown = (id: string, e: React.MouseEvent) => {
     const { clientX, clientY } = e;
@@ -302,6 +314,7 @@ export const RegularAutomaton = () => {
           <Button colorScheme="blue" onClick={simulateInput}>
             Simular Palavra
           </Button>
+          <div>Analisando palavra: {atualWord}</div>
         </Stack>
       </Box>
 
@@ -322,7 +335,15 @@ export const RegularAutomaton = () => {
             zIndex: 5,
           }}
         >
-          <StateNodeStyled highlighted={highlightedStates.includes(state.id)}>{state.label}</StateNodeStyled>
+          <StateNodeStyled
+            key={state.id}
+            highlighted={
+              highlightedStates.find((highlight) => highlight.id === state.id)
+                ?.color || ""
+            }
+          >
+            {state.label}
+          </StateNodeStyled>
           <Row>
             <button onClick={() => startTransition(state.id)}>
               <AddIcon />
@@ -343,7 +364,7 @@ export const RegularAutomaton = () => {
 
       <Box mt={4}>
         {validResults.map((result, index) => {
-          if(result.word === '') {
+          if (result.word === "") {
             result.word = "ε";
           }
 
