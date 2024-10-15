@@ -6,7 +6,7 @@ import {
   StateNodeStyled,
 } from "./regular-automaton.styles";
 import { TransitionLine } from "../../components/automaton/transition-line";
-import { Box, Button, Input, Stack, Toast } from "@chakra-ui/react";
+import { Box, Button, Input, Stack, Toast, useToast } from "@chakra-ui/react";
 import { AddIcon, StarIcon, CheckIcon, CloseIcon } from "@chakra-ui/icons";
 import { DeleteIcon } from "@chakra-ui/icons";
 import { StateInterface } from "../../interface/state-interface";
@@ -49,6 +49,7 @@ export const RegularAutomaton = () => {
     { id: string; color: string }[]
   >([]);
   const [atualWord, setAtualWord] = useState<string>("");
+  const toast = useToast();
 
   const toggleInitialState = (stateId: string) => {
     setStates((prev) =>
@@ -234,7 +235,15 @@ export const RegularAutomaton = () => {
     }
 
     setValidResults(results);
-    setHighlightedStates([]); // Limpa os destaques após o término da simulação
+    setHighlightedStates([]);
+
+    toast({
+      title: 'Verificação concluída',
+      description: 'As entradas foram verificadas com sucesso.',
+      status: 'success',
+      duration: 5000,
+      isClosable: true,
+    });
   };
 
   const handleMouseDown = (id: string, e: React.MouseEvent) => {
