@@ -38,7 +38,7 @@ export const RegularExpressionLayout = ({
           type='text'
           value={data.regex}
           onChange={(e) => handleData('regex', e.target.value)}
-          placeholder='Ex: (a|b).(a|b).(a|b)'
+          placeholder='Ex: (a|b)(a|b)(a|b)'
         />
       </FormGroup>
 
